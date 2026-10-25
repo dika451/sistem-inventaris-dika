@@ -1,41 +1,139 @@
-// Ambil data dari LocalStorage atau gunakan data awal jika kosong
-let dataBarang = JSON.parse(localStorage.getItem('inventarisData')) || [
-    { id: 1, nama: "Laptop Asus", kategori: "Elektronik", stok: 10 },
-    { id: 2, nama: "Pulpen Snowman", kategori: "ATK", stok: 3 }
-];
+// --- KONFIGURASI SUPABASE ---
+const SUPABASE_URL = 'https://jcltzkkonuhloykhlxun.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbHR6a2tvbnVobG95a2hseHVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4Njc5NjUsImV4cCI6MjEwODQ0Mzk2NX0.TAE91ZLnDx2ChiX1jr3KYGdyOKxVXChN2dQGRolPr40';
 
-// Elemen DOM
+// Inisialisasi Supabase Client
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// --- LOGIKA AUTENTIKASI (LOGIN/LOGOUT) ---
+
+// Cek status login saat halaman dimuat
+async function cekSesiLogin() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        tampilkanDashboard();
+    } else {
+        document.getElementById('login-page').style.display = 'flex';
+        document.getElementById('dashboard-page').style.display = 'none';
+    }
+}
+
+// Proses Login
+document.getElementById('form-login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
+
+    if (error) {
+        alert('Login Gagal: ' + error.message);
+    } else {
+        tampilkanDashboard();
+    }
+});
+
+// Proses Logout
+async function logout() {
+    const { error } = await supabaseClient.auth.signOut();
+    if (!error) {
+        document.getElementById('login-page').style.display = 'flex';
+        document.getElementById('dashboard-page').style.display = 'none';
+    }
+}
+
+// Fungsi untuk menampilkan Dashboard
+async function tampilkanDashboard() {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('dashboard-page').style.display = 'flex'; // flex karena layout body pakai flex
+    await initData(); // Ambil data setelah login
+}
+
+
+// --- LOGIKA CRUD BARANG ---
+
+let dataBarang = [];
 const formBarang = document.getElementById('form-barang');
 const tabelBarang = document.querySelector('#tabel-barang tbody');
 const inputSearch = document.getElementById('search-input');
 const filterKategori = document.getElementById('filter-kategori');
 
-// Simpan ke LocalStorage
-function simpanKeStorage() {
-    localStorage.setItem('inventarisData', JSON.stringify(dataBarang));
+async function ambilDataDariSupabase() {
+    const { data, error } = await supabaseClient
+        .from('barang')
+        .select('*')
+        .order('id', { ascending: true });
+    
+    if (error) {
+        console.error('Error ambil data:', error);
+        return [];
+    }
+    return data;
 }
 
-// Format Rupiah / Angka
+async function tambahKeSupabase(nama, kategori, stok) {
+    const { error } = await supabaseClient
+        .from('barang')
+        .insert([{ nama, kategori, stok }]);
+    
+    if (error) {
+        console.error(error);
+        alert('Gagal menyimpan data!');
+        return false;
+    }
+    return true;
+}
+
+async function updateKeSupabase(id, nama, kategori, stok) {
+    const { error } = await supabaseClient
+        .from('barang')
+        .update({ nama, kategori, stok })
+        .eq('id', id);
+    
+    if (error) {
+        console.error(error);
+        alert('Gagal mengupdate data!');
+        return false;
+    }
+    return true;
+}
+
+async function hapusDariSupabase(id) {
+    const { error } = await supabaseClient
+        .from('barang')
+        .delete()
+        .eq('id', id);
+    
+    if (error) {
+        console.error(error);
+        alert('Gagal menghapus data!');
+        return false;
+    }
+    return true;
+}
+
+
+// --- LOGIKA UI & RENDER ---
+
 function formatAngka(angka) {
     return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-// Render Tabel & Statistik
 function renderTabel() {
     tabelBarang.innerHTML = ''; 
-    
-    // Ambil nilai pencarian dan filter
     const keyword = inputSearch.value.toLowerCase();
     const kategoriTerpilih = filterKategori.value;
 
-    // Filter data
     const dataTerfilter = dataBarang.filter(barang => {
         const cocokNama = barang.nama.toLowerCase().includes(keyword);
         const cocokKategori = kategoriTerpilih === 'Semua' || barang.kategori === kategoriTerpilih;
         return cocokNama && cocokKategori;
     });
 
-    // Render baris tabel
     if (dataTerfilter.length === 0) {
         tabelBarang.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: #6b7280;">Tidak ada data barang ditemukan.</td></tr>`;
     } else {
@@ -56,11 +154,9 @@ function renderTabel() {
             tabelBarang.appendChild(tr);
         });
     }
-
     updateStatistik();
 }
 
-// Update Kartu Statistik
 function updateStatistik() {
     const totalBarang = dataBarang.length;
     const totalStok = dataBarang.reduce((total, b) => total + b.stok, 0);
@@ -71,34 +167,32 @@ function updateStatistik() {
     document.getElementById('stok-menipis').innerText = stokMenipis;
 }
 
-// Tambah / Simpan Edit Barang
-formBarang.addEventListener('submit', function(e) {
+formBarang.addEventListener('submit', async function(e) {
     e.preventDefault();
-
     const idEdit = document.getElementById('edit-id').value;
     const nama = document.getElementById('nama-barang').value;
     const stok = parseInt(document.getElementById('stok-barang').value);
     const kategori = document.getElementById('kategori-barang').value;
 
+    let berhasil = false;
+
     if (idEdit) {
         // Mode Edit
-        const index = dataBarang.findIndex(b => b.id == idEdit);
-        dataBarang[index] = { id: parseInt(idEdit), nama, kategori, stok };
-        tampilkanToast('Data barang berhasil diperbarui!');
-        resetForm();
+        berhasil = await updateKeSupabase(idEdit, nama, kategori, stok);
+        if (berhasil) tampilkanToast('Data barang berhasil diperbarui!');
     } else {
-        // Mode Tambah Baru
-        const idBaru = dataBarang.length > 0 ? Math.max(...dataBarang.map(b => b.id)) + 1 : 1;
-        dataBarang.push({ id: idBaru, nama, kategori, stok });
-        tampilkanToast('Barang baru berhasil ditambahkan!');
-        formBarang.reset();
+        // Mode Tambah
+        berhasil = await tambahKeSupabase(nama, kategori, stok);
+        if (berhasil) tampilkanToast('Barang berhasil ditambahkan!');
     }
-
-    simpanKeStorage();
-    renderTabel();
+    
+    if (berhasil) {
+        resetForm();
+        dataBarang = await ambilDataDariSupabase(); 
+        renderTabel();
+    }
 });
 
-// Edit Barang (Mengisi Form)
 function editBarang(id) {
     const barang = dataBarang.find(b => b.id === id);
     if (barang) {
@@ -110,10 +204,10 @@ function editBarang(id) {
         document.getElementById('form-title').innerText = "Edit Data Barang";
         document.getElementById('btn-submit').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan';
         document.getElementById('btn-cancel').style.display = 'block';
+        window.scrollTo(0, 0); // Scroll ke atas agar form terlihat
     }
 }
 
-// Reset Form ke Mode Tambah
 function resetForm() {
     formBarang.reset();
     document.getElementById('edit-id').value = '';
@@ -122,17 +216,17 @@ function resetForm() {
     document.getElementById('btn-cancel').style.display = 'none';
 }
 
-// Hapus Barang
-function hapusBarang(id) {
+async function hapusBarang(id) {
     if (confirm('Apakah Anda yakin ingin menghapus barang ini?')) {
-        dataBarang = dataBarang.filter(barang => barang.id !== id);
-        simpanKeStorage();
-        renderTabel();
-        tampilkanToast('Barang berhasil dihapus!');
+        const berhasil = await hapusDariSupabase(id);
+        if (berhasil) {
+            dataBarang = await ambilDataDariSupabase();
+            renderTabel();
+            tampilkanToast('Barang berhasil dihapus!');
+        }
     }
 }
 
-// Toast Notifikasi
 function tampilkanToast(pesan) {
     const toast = document.getElementById('toast');
     toast.innerText = pesan;
@@ -140,9 +234,13 @@ function tampilkanToast(pesan) {
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// Event Listener untuk Pencarian & Filter
 inputSearch.addEventListener('input', renderTabel);
 filterKategori.addEventListener('change', renderTabel);
 
-// Render pertama kali saat dibuka
-renderTabel();
+// Mulai aplikasi dengan mengecek sesi login
+async function initData() {
+    dataBarang = await ambilDataDariSupabase();
+    renderTabel();
+}
+
+cekSesiLogin();

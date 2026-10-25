@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Informasi Inventaris</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Sidebar / Navigasi -->
+    <div class="sidebar">
+        <h2>SI-Inventaris</h2>
+        <ul>
+            <li class="active">Dashboard</li>
+            <li>Daftar Barang</li>
+            <li>Laporan</li>
+        </ul>
+    </div>
+
+    <!-- Konten Utama -->
+    <div class="main-content">
+        <header>
+            <h1>Dashboard Inventaris</h1>
+            <p>Kelola data barang masuk dan keluar dengan mudah.</p>
+        </header>
+
+        <!-- Form Tambah Barang -->
+        <div class="card form-card">
+            <h3>Tambah Barang Baru</h3>
+            <form id="form-barang">
+                <input type="text" id="nama-barang" placeholder="Nama Barang" required>
+                <input type="number" id="stok-barang" placeholder="Jumlah Stok" required>
+                <select id="kategori-barang" required>
+                    <option value="">Pilih Kategori</option>
+                    <option value="Elektronik">Elektronik</option>
+                    <option value="ATK">Alat Tulis Kantor</option>
+                    <option value="Furnitur">Furnitur</option>
+                </select>
+                <button type="submit">Tambah Barang</button>
+            </form>
+        </div>
+
+        <!-- Tabel Data Barang -->
+        <div class="card table-card">
+            <h3>Daftar Inventaris</h3>
+            <table id="tabel-barang">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Barang</th>
+                        <th>Kategori</th>
+                        <th>Stok</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data akan dimasukkan lewat JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

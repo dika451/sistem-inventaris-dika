@@ -146,22 +146,3 @@ filterKategori.addEventListener('change', renderTabel);
 
 // Render pertama kali saat dibuka
 renderTabel();
-// Fungsi untuk navigasi antar menu
-function gantiHalaman(namaHalaman, elemenMenu) {
-    // 1. Ubah status aktif pada menu sidebar
-    const semuaMenu = document.querySelectorAll('.menu li');
-    semuaMenu.forEach(menu => menu.classList.remove('active'));
-    elemenMenu.classList.add('active');
-
-    // 2. Sembunyikan semua halaman
-    document.getElementById('halaman-dashboard').style.display = 'none';
-    document.getElementById('halaman-lain').style.display = 'none';
-
-    // 3. Tampilkan halaman sesuai yang diklik
-    if (namaHalaman === 'dashboard') {
-        document.getElementById('halaman-dashboard').style.display = 'block';
-    } else {
-        document.getElementById('halaman-lain').style.display = 'block';
-        document.getElementById('judul-halaman-lain').innerText = `Halaman ${namaHalaman.charAt(0).toUpperCase() + namaHalaman.slice(1)}`;
-    }
-}

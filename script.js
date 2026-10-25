@@ -25,18 +25,16 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password,
-    });
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
     if (error) {
         alert('Login Gagal: ' + error.message);
     } else {
-        tampilkanDashboard();
+        // BARIS INI YANG HARUSNYA ADA
+        currentUserRole = data.user.user_metadata?.role || 'user';
+        tampilkanDashboard(currentUserRole);
     }
 });
-
 // Proses Logout
 async function logout() {
     const { error } = await supabaseClient.auth.signOut();

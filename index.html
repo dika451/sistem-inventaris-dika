@@ -3,63 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Informasi Inventaris</title>
+    <title>Sistem Informasi Inventaris Pro</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Menggunakan Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <!-- Sidebar / Navigasi -->
+    <!-- Sidebar -->
     <div class="sidebar">
-        <h2>SI-Inventaris</h2>
-        <ul>
-            <li class="active">Dashboard</li>
-            <li>Daftar Barang</li>
-            <li>Laporan</li>
+        <div class="logo">
+            <i class="fa-solid fa-boxes-stacked"></i> <span>InvenPro</span>
+        </div>
+        <ul class="menu">
+            <li class="active"><i class="fa-solid fa-gauge"></i> Dashboard</li>
+            <li><i class="fa-solid fa-box"></i> Barang</li>
+            <li><i class="fa-solid fa-chart-line"></i> Laporan</li>
+            <li><i class="fa-solid fa-gear"></i> Pengaturan</li>
         </ul>
     </div>
 
     <!-- Konten Utama -->
     <div class="main-content">
         <header>
-            <h1>Dashboard Inventaris</h1>
-            <p>Kelola data barang masuk dan keluar dengan mudah.</p>
+            <div>
+                <h1>Dashboard Inventaris</h1>
+                <p>Selamat datang kembali, Dika. Berikut ringkasan data Anda hari ini.</p>
+            </div>
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Dika&background=0D8ABC&color=fff" alt="User">
+            </div>
         </header>
 
-        <!-- Form Tambah Barang -->
-        <div class="card form-card">
-            <h3>Tambah Barang Baru</h3>
-            <form id="form-barang">
-                <input type="text" id="nama-barang" placeholder="Nama Barang" required>
-                <input type="number" id="stok-barang" placeholder="Jumlah Stok" required>
-                <select id="kategori-barang" required>
-                    <option value="">Pilih Kategori</option>
-                    <option value="Elektronik">Elektronik</option>
-                    <option value="ATK">Alat Tulis Kantor</option>
-                    <option value="Furnitur">Furnitur</option>
-                </select>
-                <button type="submit">Tambah Barang</button>
-            </form>
+        <!-- Kartu Statistik -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon blue"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <div>
+                    <h3>Total Barang</h3>
+                    <h2 id="total-barang">0</h2>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon green"><i class="fa-solid fa-cubes"></i></div>
+                <div>
+                    <h3>Total Stok</h3>
+                    <h2 id="total-stok">0</h2>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div>
+                    <h3>Stok Menipis (< 5)</h3>
+                    <h2 id="stok-menipis">0</h2>
+                </div>
+            </div>
         </div>
 
-        <!-- Tabel Data Barang -->
-        <div class="card table-card">
-            <h3>Daftar Inventaris</h3>
-            <table id="tabel-barang">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Nama Barang</th>
-                        <th>Kategori</th>
-                        <th>Stok</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data akan dimasukkan lewat JavaScript -->
-                </tbody>
-            </table>
+        <div class="grid-layout">
+            <!-- Form Tambah/Edit Barang -->
+            <div class="card form-card">
+                <h3 id="form-title">Tambah Barang Baru</h3>
+                <form id="form-barang">
+                    <input type="hidden" id="edit-id">
+                    <div class="input-group">
+                        <label>Nama Barang</label>
+                        <input type="text" id="nama-barang" placeholder="Cth: Laptop Asus" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Kategori</label>
+                        <select id="kategori-barang" required>
+                            <option value="">-- Pilih Kategori --</option>
+                            <option value="Elektronik">Elektronik</option>
+                            <option value="ATK">Alat Tulis Kantor (ATK)</option>
+                            <option value="Furnitur">Furnitur</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Jumlah Stok</label>
+                        <input type="number" id="stok-barang" placeholder="Cth: 10" min="1" required>
+                    </div>
+                    <button type="submit" id="btn-submit" class="btn-primary"><i class="fa-solid fa-plus"></i> Tambah Barang</button>
+                    <button type="button" id="btn-cancel" class="btn-secondary" style="display:none;" onclick="resetForm()">Batal Edit</button>
+                </form>
+            </div>
+
+            <!-- Tabel Data Barang -->
+            <div class="card table-card">
+                <div class="table-header">
+                    <h3>Daftar Inventaris</h3>
+                    <div class="table-tools">
+                        <div class="search-box">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" id="search-input" placeholder="Cari barang...">
+                        </div>
+                        <select id="filter-kategori" class="filter-select">
+                            <option value="Semua">Semua Kategori</option>
+                            <option value="Elektronik">Elektronik</option>
+                            <option value="ATK">ATK</option>
+                            <option value="Furnitur">Furnitur</option>
+                        </select>
+                    </div>
+                </div>
+                <table id="tabel-barang">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Barang</th>
+                            <th>Kategori</th>
+                            <th>Stok</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data dimasukkan lewat JS -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <!-- Toast Notifikasi -->
+    <div id="toast" class="toast">Data berhasil disimpan!</div>
 
     <script src="script.js"></script>
 </body>
